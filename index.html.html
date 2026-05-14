@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MYCAS Tool Tracking</title>
+    <style>
+        /* --- CSS: The Design --- */
+        :root {
+            --primary-blue: #1a3a5f;
+            --secondary-blue: #2c5282;
+            --danger-red: #e53e3e;
+            --warning-orange: #ed8936;
+            --success-green: #48bb78;
+            --light-bg: #f7fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 60px; /* Space for bottom tabs */
+        }
+
+        /* Header Area */
+        header {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .logo-placeholder {
+            background: white;
+            color: var(--primary-blue);
+            padding: 5px 15px;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        /* Summary Bar */
+        .summary-bar {
+            display: flex;
+            gap: 20px;
+            padding: 15px 2rem;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .stat-card {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: white;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        /* Controls */
+        .controls {
+            padding: 15px 2rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        button.btn-add {
+            background-color: var(--success-green);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Table Design */
+        .table-container {
+            padding: 0 2rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 0.85rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background-color: #edf2f7;
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Logic Coloring */
+        .row-overdue { color: var(--danger-red); font-weight: bold; }
+        .row-soon { color: var(--warning-orange); font-weight: bold; }
+        .row-out { color: var(--warning-orange); font-style: italic; }
+
+        .badge-green { background: var(--success-green); color: white; padding: 2px 8px; border-radius: 10px; }
+        .badge-red { background: var(--danger-red); color: white; padding: 2px 8px; border-radius: 10px; }
+        .badge-orange { background: var(--warning-orange); color: white; padding: 2px 8px; border-radius: 10px; }
+
+        /* Action Buttons */
+        .btn-edit { background: #4a5568; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 2px; }
+        .btn-delete { background: #cbd5e0; color: #2d3748; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; }
+
+        /* Bottom Tabs (Excel Style) */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: #2d3748;
+            display: flex;
+            height: 40px;
+        }
+
+        .tab {
+            padding: 10px 25px;
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-right: 1px solid #4a5568;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: white;
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+
+        /* Modal / Popup Form */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
+        
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="font-size: 1.2rem; font-weight: bold;">CALIBRATED TOOL TRACKING & CONTROL RECORD – MECHANICAL (CM)</div>
+        <div class="logo-placeholder">MYCAS LOGO</div>
+    </header>
+
+    <div class="summary-bar" id="summaryBar">
+        <!-- Stats populated by JavaScript -->
+    </div>
+
+    <div class="controls">
+        <button class="btn-add" onclick="openModal()">+ Add New Tool</button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Model</th>
+                    <th>Serial Number</th>
+                    <th>Last Done</th>
+                    <th>Interval</th>
+                    <th>Status</th>
+                    <th>Next Due</th>
+                    <th>Remaining (Day)</th>
+                    <th>Current Cert</th>
+                    <th>Applicable Doc</th>
+                    <th>Location</th>
+                    <th>Repair Centre</th>
+                    <th>Remarks</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="toolTableBody">
+                <!-- Rows populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="tab-bar">
+        <div class="tab active">Calibrated Mechanical (CM)</div>
+        <div class="tab" onclick="alert('Tab 2 coming soon!')">Calibrated Avionic (CA)</div>
+        <div class="tab" onclick="alert('Tab 3 coming soon!')">Tool Register</div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="toolModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add Tool</h2>
+            <form id="toolForm">
+                <input type="hidden" id="editIndex">
+                <div class="form-group"><label>ID</label><input type="text" id="toolID" required placeholder="e.g. CM1"></div>
+                <div class="form-group"><label>Description</label><input type="text" id="desc" required></div>
+                <div class="form-group"><label>Model</label><input type="text" id="model"></div>
+                <div class="form-group"><label>Serial Number</label><input type="text" id="sn"></div>
+                <div class="form-group"><label>Last Done (YYYY-MM-DD)</label><input type="date" id="lastDone"></div>
+                <div class="form-group"><label>Interval</label><input type="text" id="interval" value="1 YEAR"></div>
+                <div class="form-group"><label>Next Due (YYYY-MM-DD)</label><input type="date" id="nextDue" required></div>
+                <div class="form-group"><label>Current Cert</label><input type="text" id="cert"></div>
+                <div class="form-group"><label>App. Document</label><input type="text" id="doc"></div>
+                <div class="form-group"><label>Location</label><input type="text" id="location"></div>
+                <div class="form-group"><label>Repair Centre</label><input type="text" id="centre"></div>
+                <div class="form-group"><label>Remarks</label><input type="text" id="remarks"></div>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModal()">Cancel</button>
+                    <button type="submit" style="background: var(--primary-blue); color: white; padding: 8px 15px; border: none; border-radius: 4px;">Save Tool</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /* --- JavaScript: The Logic --- */
+
+        // 1. Initial Sample Data
+        const initialData = [
+            { id: "CM1", desc: "TORQUE WRENCH (40-250 ft lb)", model: "666-30", sn: "2006/193026", lastDone: "2025-06-19", interval: "1 YEAR", nextDue: "2026-06-19", cert: "SM24177601", doc: "TEA/25/032", loc: "CABINET, CALIBRATION TOOLS", center: "SENDI MAHIR SB", remarks: "" },
+            { id: "CM2", desc: "TORQUE WRENCH (30-150 ft lb)", model: "666-20", sn: "2007/162599", lastDone: "2025-06-19", interval: "1 YEAR", nextDue: "2026-06-19", cert: "SM25145351", doc: "TEA/25/031", loc: "CABINET, CALIBRATION TOOLS", center: "SENDI MAHIR SB", remarks: "" },
+            { id: "CM4", desc: "VENIER CALLIPER", model: "SK", sn: "07104217", lastDone: "2025-03-03", interval: "1 YEAR", nextDue: "2026-03-03", cert: "SMS25115853", doc: "TEA/25/004", loc: "CABINET, CALIBRATION TOOLS", center: "SENDI MAHIR SB", remarks: "OUT FOR CALIBRATION" },
+            { id: "CM5", desc: "THERMOHYGROMETER", model: "TFA 30.5002", sn: "-", lastDone: "2025-08-08", interval: "1 YEAR", nextDue: "2026-08-08", cert: "25071332", doc: "TEA/250/42", loc: "CABINET, CALIBRATION TOOLS", center: "TRESCAL SB", remarks: "" },
+            { id: "CM10", desc: "TORQUE WRENCH (40-200 lb in)", model: "SNAP-ON QD1R200", sn: "0711057400", lastDone: "2025-06-19", interval: "1 YEAR", nextDue: "2026-06-19", cert: "SM25145354", doc: "TEA/25/028", loc: "CABINET, CALIBRATION TOOLS", center: "SENDI MAHIR SB", remarks: "" },
+            { id: "CM11", desc: "TORQUE WRENCH (0-50 lb in)", model: "SNAP-ON QD150", sn: "0711503498", lastDone: "2025-06-19", interval: "1 YEAR", nextDue: "2026-10-16", cert: "SM25145353", doc: "TEA/25/030", loc: "CABINET, CALIBRATION TOOLS", center: "SENDI MAHIR SB", remarks: "" },
+            { id: "CM13", desc: "THERMOHYGROMETER", model: "TFA 30.5002", sn: "-", lastDone: "2025-03-03", interval: "1 YEAR", nextDue: "2026-03-03", cert: "SMS25115855", doc: "TEA/25/003", loc: "BONDED STORE", center: "SENDI MAHIR SB", remarks: "OUT FOR CALIBRATION" },
+            { id: "CM17", desc: "NITROGEN REGULATOR GAUGE-HP", model: "BS EN 562", sn: "-", lastDone: "2025-08-08", interval: "1 YEAR", nextDue: "2026-08-08", cert: "25071330", doc: "TEA/25/043", loc: "CABINET, CALIBRATION TOOLS", center: "TRESCAL SB", remarks: "" },
+            { id: "CM19", desc: "PRESSURE GAUGE (1000 PSI)", model: "VICTOR USA", sn: "-", lastDone: "2025-11-23", interval: "1 YEAR", nextDue: "2026-11-23", cert: "25102378", doc: "TEA/25/054", loc: "CABINET, CALIBRATION TOOLS", center: "TRESCAL SB", remarks: "COMPATIBLE WITH NITROGEN BOTTLE" },
+            { id: "CM20", desc: "PRESSURE GAUGE (1500 lb/sq.in.)", model: "DILL 8875", sn: "13154", lastDone: "2025-03-10", interval: "1 YEAR", nextDue: "2026-03-10", cert: "SMS25115849", doc: "TEA/25/007", loc: "CABINET, CALIBRATION TOOLS", center: "TRESCAL SB", remarks: "OUT FOR CALIBRATION" }
+        ];
+
+        // Load data from LocalStorage or use initial
+        let tools = JSON.parse(localStorage.getItem('mycas_tools')) || initialData;
+
+        // 2. Helper: Calculate days remaining
+        function getDaysRemaining(nextDue) {
+            const today = new Date();
+            const due = new Date(nextDue);
+            const diffTime = due - today;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // 3. Render Table
+        function renderTable() {
+            const tbody = document.getElementById('toolTableBody');
+            tbody.innerHTML = '';
+            
+            let stats = { total: 0, overdue: 0, soon: 0, ok: 0 };
+
+            tools.forEach((tool, index) => {
+                const daysRem = getDaysRemaining(tool.nextDue);
+                let rowClass = "";
+                let badgeClass = "badge-green";
+
+                // Logic for styling
+                if (daysRem < 0) {
+                    rowClass = "row-overdue";
+                    badgeClass = "badge-red";
+                    stats.overdue++;
+                } else if (daysRem <= 90) {
+                    rowClass = "row-soon";
+                    badgeClass = "badge-orange";
+                    stats.soon++;
+                } else {
+                    stats.ok++;
+                }
+
+                if (tool.remarks.toUpperCase().includes("OUT FOR CALIBRATION")) {
+                    rowClass = "row-out";
+                }
+
+                stats.total++;
+
+                const row = `
+                    <tr class="${rowClass}">
+                        <td>${tool.id}</td>
+                        <td>${tool.desc}</td>
+                        <td>${tool.model}</td>
+                        <td>${tool.sn}</td>
+                        <td>${tool.lastDone}</td>
+                        <td>${tool.interval}</td>
+                        <td><span class="${badgeClass}">Y</span></td>
+                        <td>${tool.nextDue}</td>
+                        <td>${daysRem}</td>
+                        <td>${tool.cert}</td>
+                        <td>${tool.doc}</td>
+                        <td>${tool.loc}</td>
+                        <td>${tool.center}</td>
+                        <td>${tool.remarks}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editTool(${index})">Edit</button>
+                            <button class="btn-delete" onclick="deleteTool(${index})">Del</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+            updateSummary(stats);
+            localStorage.setItem('mycas_tools', JSON.stringify(tools));
+        }
+
+        // 4. Update Summary Bar
+        function updateSummary(stats) {
+            const summary = document.getElementById('summaryBar');
+            summary.innerHTML = `
+                <div class="stat-card" style="background: #4a5568">Total: ${stats.total}</div>
+                <div class="stat-card" style="background: var(--danger-red)">Overdue: ${stats.overdue}</div>
+                <div class="stat-card" style="background: var(--warning-orange)">Due Soon (0-90): ${stats.soon}</div>
+                <div class="stat-card" style="background: var(--success-green)">OK: ${stats.ok}</div>
+            `;
+        }
+
+        // 5. CRUD Operations
+        function openModal(index = -1) {
+            document.getElementById('toolModal').style.display = 'flex';
+            if (index > -1) {
+                const t = tools[index];
+                document.getElementById('modalTitle').innerText = "Edit Tool";
+                document.getElementById('editIndex').value = index;
+                document.getElementById('toolID').value = t.id;
+                document.getElementById('desc').value = t.desc;
+                document.getElementById('model').value = t.model;
+                document.getElementById('sn').value = t.sn;
+                document.getElementById('lastDone').value = t.lastDone;
+                document.getElementById('interval').value = t.interval;
+                document.getElementById('nextDue').value = t.nextDue;
+                document.getElementById('cert').value = t.cert;
+                document.getElementById('doc').value = t.doc;
+                document.getElementById('location').value = t.loc;
+                document.getElementById('centre').value = t.center;
+                document.getElementById('remarks').value = t.remarks;
+            } else {
+                document.getElementById('modalTitle').innerText = "Add New Tool";
+                document.getElementById('toolForm').reset();
+                document.getElementById('editIndex').value = -1;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('toolModal').style.display = 'none';
+        }
+
+        document.getElementById('toolForm').onsubmit = function(e) {
+            e.preventDefault();
+            const index = document.getElementById('editIndex').value;
+            const newTool = {
+                id: document.getElementById('toolID').value,
+                desc: document.getElementById('desc').value,
+                model: document.getElementById('model').value,
+                sn: document.getElementById('sn').value,
+                lastDone: document.getElementById('lastDone').value,
+                interval: document.getElementById('interval').value,
+                nextDue: document.getElementById('nextDue').value,
+                cert: document.getElementById('cert').value,
+                doc: document.getElementById('doc').value,
+                loc: document.getElementById('location').value,
+                center: document.getElementById('centre').value,
+                remarks: document.getElementById('remarks').value
+            };
+
+            if (index > -1) tools[index] = newTool;
+            else tools.push(newTool);
+
+            closeModal();
+            renderTable();
+        };
+
+        function deleteTool(index) {
+            if (confirm("Are you sure you want to delete this tool?")) {
+                tools.splice(index, 1);
+                renderTable();
+            }
+        }
+
+        function editTool(index) {
+            openModal(index);
+        }
+
+        // Initial Start
+        renderTable();
+
+    </script>
+</body>
+</html>
